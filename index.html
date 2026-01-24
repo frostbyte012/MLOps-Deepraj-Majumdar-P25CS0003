@@ -3,95 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DLOps Project | Deepraj Majumdar</title>
+    <title>MLOps & DLOps Portfolio | Deepraj Majumdar</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>DLOps Performance Analysis</h1>
-            <p>Deep Learning Model Benchmarking & Hardware Efficiency</p>
+            <div class="badge">IIT Jodhpur</div>
+            <h1>MLOps & DLOps Coursework</h1>
+            <p>Bridging the gap between Deep Learning research and Production Engineering</p>
             <div class="meta">
-                <span><strong>Author:</strong> Deepraj Majumdar</span>
-                <span><strong>Roll:</strong> P25CS0003</span>
+                <span><i class="fas fa-user"></i> Deepraj Majumdar</span>
+                <span><i class="fas fa-id-badge"></i> P25CS0003</span>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <section id="grid-search">
-            <h2>1. Deep Learning Grid Search (Q1a)</h2>
-            <div class="card">
-                <h3>MNIST Accuracy Comparison</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Batch</th><th>Opt</th><th>LR</th><th>ResNet-18</th><th>ResNet-50</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>16</td><td>SGD</td><td>0.001</td><td>98.84%</td><td>97.81%</td></tr>
-                            <tr class="highlight"><td>16</td><td>Adam</td><td>0.001</td><td>98.94%</td><td>97.76%</td></tr>
-                            <tr><td>32</td><td>Adam</td><td>0.0001</td><td>98.51%</td><td>97.35%</td></tr>
-                        </tbody>
-                    </table>
+        <section id="objectives">
+            <div class="grid">
+                <div class="card card-accent">
+                    <h3><i class="fas fa-brain"></i> DLOps Focus</h3>
+                    <p>Analysis of model depth vs. efficiency, FLOPs tracking, and hardware-aware training (CPU vs. GPU).</p>
                 </div>
-            </div>
-
-            <div class="card">
-                <h3>FashionMNIST Accuracy Comparison</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Batch</th><th>Opt</th><th>LR</th><th>ResNet-18</th><th>ResNet-50</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>16</td><td>SGD</td><td>0.001</td><td>88.69%</td><td>83.39%</td></tr>
-                            <tr class="highlight"><td>16</td><td>Adam</td><td>0.0001</td><td>90.20%</td><td>87.54%</td></tr>
-                        </tbody>
-                    </table>
+                <div class="card card-accent">
+                    <h3><i class="fas fa-cogs"></i> MLOps Focus</h3>
+                    <p>Automating model lifecycles, reproducibility, version control for data/models, and scalable deployment.</p>
                 </div>
             </div>
         </section>
 
-        <section id="svm">
-            <h2>2. SVM Baseline Results (Q1b)</h2>
-            <div class="card">
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Dataset</th><th>Kernel</th><th>C</th><th>Accuracy</th><th>Time (ms)</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>MNIST</td><td>poly</td><td>1.0</td><td>97.94%</td><td>311,359</td></tr>
-                            <tr><td>F-MNIST</td><td>poly</td><td>1.0</td><td>89.86%</td><td>525,829</td></tr>
-                        </tbody>
-                    </table>
+        <section id="assignments">
+            <h2>Current Assignments</h2>
+            
+            <div class="assignment-card">
+                <div class="status-tag status-complete">Completed</div>
+                <div class="assignment-content">
+                    <div class="text">
+                        <h3>Assignment 1: Performance & Hardware Analysis</h3>
+                        <p>A deep dive into ResNet architectures (18, 32, 50) and SVM benchmarks. Features full analysis of FLOPs and hardware speedup factors.</p>
+                        <div class="tags">
+                            <span class="tag">PyTorch</span>
+                            <span class="tag">CUDA</span>
+                            <span class="tag">Benchmarking</span>
+                        </div>
+                    </div>
+                    <a href="#assignment1-details" class="btn">View Dashboard</a>
+                </div>
+            </div>
+
+            <div class="assignment-card disabled">
+                <div class="status-tag status-pending">Upcoming</div>
+                <div class="assignment-content">
+                    <div class="text">
+                        <h3>Assignment 2: Containerization & CI/CD</h3>
+                        <p>Focusing on Dockerizing ML models and setting up automated GitHub Action pipelines for model testing.</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section id="hardware">
-            <h2>3. Hardware & Operational Analysis (Q2)</h2>
-            <div class="card">
+        <section id="assignment1-details" class="details-section">
+            <hr>
+            <h2 class="section-title">Assignment 1 Live Metrics</h2>
+            
+            <div class="card shadow">
+                <h3>Hardware Performance (FashionMNIST)</h3>
+                
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th>Compute</th><th>Model</th><th>Acc</th><th>Time (ms)</th><th>FLOPs</th></tr>
+                            <tr>
+                                <th>Backend</th>
+                                <th>Model</th>
+                                <th>Accuracy</th>
+                                <th>Time (ms)</th>
+                                <th>FLOPs</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <tr class="gpu-row"><td>GPU</td><td>ResNet-18</td><td>83.16%</td><td>65,526</td><td>5.51e+08</td></tr>
-                            <tr class="cpu-row"><td>CPU</td><td>ResNet-18</td><td>86.64%</td><td>2,490,042</td><td>5.51e+08</td></tr>
+                            <tr class="gpu-row"><td>GPU (CUDA)</td><td>ResNet-18</td><td>85.59%</td><td>59,971</td><td>5.51e+08</td></tr>
+                            <tr class="cpu-row"><td>CPU (Intel)</td><td>ResNet-18</td><td>85.24%</td><td>2,375,155</td><td>5.51e+08</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="note"><strong>Insight:</strong> GPU acceleration provides a ~60x speedup while maintaining constant FLOPs.</p>
+                <p class="insight">Note: The GPU achieved a speedup of ~40x compared to the CPU while maintaining identical FLOPs.</p>
+            </div>
+
+            <div class="card shadow">
+                <h3>Architecture Complexity</h3>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Architecture</th>
+                                <th>Params</th>
+                                <th>GFLOPs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>ResNet-18</td><td>11.2 M</td><td>0.55</td></tr>
+                            <tr><td>ResNet-32</td><td>21.3 M</td><td>1.14</td></tr>
+                            <tr><td>ResNet-50</td><td>23.5 M</td><td>1.28</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2026 Deepraj Majumdar | IIT Jodhpur | MLOps/DLOps Coursework</p>
+        <div class="container">
+            <p>Deepraj Majumdar | M.Tech (CSE) | IIT Jodhpur</p>
+            <div class="social-links">
+                <a href="https://github.com/frostbyte012">GitHub</a> • 
+                <a href="#">LinkedIn</a> • 
+                <a href="#">Portfolio</a>
+            </div>
+        </div>
     </footer>
 </body>
 </html>
