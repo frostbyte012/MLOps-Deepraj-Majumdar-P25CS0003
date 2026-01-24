@@ -94,4 +94,7 @@ This section highlights the training efficiency of different compute backends. *
 
 ---
 
+Collab Link : https://colab.research.google.com/drive/1m9JDeVYc9-Z8-PjTOTIdmqst60CmHNDK?usp=sharing
+
+
 **Author**: Deepraj Majumdar (P25CS0003) | **IIT Jodhpur**
