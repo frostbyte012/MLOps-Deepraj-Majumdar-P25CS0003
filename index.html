@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLOps Project | Deepraj Majumdar</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>DLOps Performance Analysis</h1>
+            <p>Deep Learning Model Benchmarking & Hardware Efficiency</p>
+            <div class="meta">
+                <span><strong>Author:</strong> Deepraj Majumdar</span>
+                <span><strong>Roll:</strong> P25CS0003</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="grid-search">
+            <h2>1. Deep Learning Grid Search (Q1a)</h2>
+            <div class="card">
+                <h3>MNIST Accuracy Comparison</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Batch</th><th>Opt</th><th>LR</th><th>ResNet-18</th><th>ResNet-50</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>16</td><td>SGD</td><td>0.001</td><td>98.84%</td><td>97.81%</td></tr>
+                            <tr class="highlight"><td>16</td><td>Adam</td><td>0.001</td><td>98.94%</td><td>97.76%</td></tr>
+                            <tr><td>32</td><td>Adam</td><td>0.0001</td><td>98.51%</td><td>97.35%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>FashionMNIST Accuracy Comparison</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Batch</th><th>Opt</th><th>LR</th><th>ResNet-18</th><th>ResNet-50</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>16</td><td>SGD</td><td>0.001</td><td>88.69%</td><td>83.39%</td></tr>
+                            <tr class="highlight"><td>16</td><td>Adam</td><td>0.0001</td><td>90.20%</td><td>87.54%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="svm">
+            <h2>2. SVM Baseline Results (Q1b)</h2>
+            <div class="card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Dataset</th><th>Kernel</th><th>C</th><th>Accuracy</th><th>Time (ms)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>MNIST</td><td>poly</td><td>1.0</td><td>97.94%</td><td>311,359</td></tr>
+                            <tr><td>F-MNIST</td><td>poly</td><td>1.0</td><td>89.86%</td><td>525,829</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="hardware">
+            <h2>3. Hardware & Operational Analysis (Q2)</h2>
+            <div class="card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Compute</th><th>Model</th><th>Acc</th><th>Time (ms)</th><th>FLOPs</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr class="gpu-row"><td>GPU</td><td>ResNet-18</td><td>83.16%</td><td>65,526</td><td>5.51e+08</td></tr>
+                            <tr class="cpu-row"><td>CPU</td><td>ResNet-18</td><td>86.64%</td><td>2,490,042</td><td>5.51e+08</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note"><strong>Insight:</strong> GPU acceleration provides a ~60x speedup while maintaining constant FLOPs.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Deepraj Majumdar | IIT Jodhpur | MLOps/DLOps Coursework</p>
+    </footer>
+</body>
+</html>
