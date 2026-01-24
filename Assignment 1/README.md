@@ -2,7 +2,7 @@ This `README.md` is the complete and final version, incorporating all core and o
 
 ---
 
-# **ML-Ops & DL-Ops Lab: Comprehensive Resnet Models Performance & Hardware Analysis**
+# **ML-Ops_DL-Ops Lab: Comprehensive Resnet Models Performance & Hardware Analysis**
 
 ## **Project Overview**
 
@@ -73,9 +73,9 @@ This section highlights the training efficiency of different compute backends. *
 
 | Model | FLOPs (Floating Point Operations) | Parameters (Approx.) |
 | --- | --- | --- |
-| **ResNet-18** |  | 11.2 Million |
-| **ResNet-32** |  | 21.3 Million |
-| **ResNet-50** |  | 23.5 Million |
+| **ResNet-18** | 5.51x10^8 | 11.2 Million |
+| **ResNet-32** | 1.14 x 10^9 | 21.3 Million |
+| **ResNet-50** | 1.28 x 10^9 | 23.5 Million |
 
 ---
 
