@@ -1,0 +1,26 @@
+dataContractSpecification: 0.9.3
+id: urn:datacontract:fintech:fraud-detection-log
+version: 1.0.0
+
+info:
+  title: "Fraud Detection Transaction Log"
+  owner: "FinTech Platform Team"
+
+schema:
+  type: object
+  properties:
+    account_source_id:
+      type: string
+      description: "Source Account (Required: 10 chars, Uppercase Alphanumeric)"
+      # physical_mapping: acct_src
+    account_destination_id:
+      type: string
+      # physical_mapping: acct_dest
+
+quality:
+  - name: rule_account_id_format
+    type: validity
+    expression: "REGEXP_LIKE(account_source_id, '^[A-Z0-9]{10}$')"
+    threshold: "100%"
+    enforcement: hard # Hard Circuit Breaker: Pipeline blocks on violation
+    description: "Account IDs must be exactly 10 uppercase alphanumeric characters"

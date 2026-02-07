@@ -1,0 +1,33 @@
+dataContractSpecification: 0.9.3
+id: urn:datacontract:ecommerce:flash-sale-orders
+version: 1.0.0
+
+info:
+  title: "Flash Sale Order Stream"
+  owner: "Order Management Team"
+
+schema:
+  type: object
+  properties:
+    order_total:
+      type: number
+      description: "Order total in USD"
+      minimum: 0
+    status:
+      type: string
+      enum: [PAID, SHIPPED, CANCELLED]
+      description: "Mapping of status_code: 2=PAID, 5=SHIPPED, 9=CANCELLED"
+
+quality:
+  - name: rule_total_non_negative
+    type: validity
+    expression: "order_total >= 0"
+    threshold: "100%"
+    enforcement: hard
+
+  - name: rule_reject_unmapped_status
+    type: validity
+    expression: "status_code IN (2, 5, 9)"
+    threshold: "100%"
+    enforcement: hard
+    description: "Ensures only known status codes are processed"
