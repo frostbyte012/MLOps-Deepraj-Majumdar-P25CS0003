@@ -1,0 +1,36 @@
+dataContractSpecification: 0.9.3
+id: urn:datacontract:iot:smart-thermostat-fleet
+version: 1.0.0
+
+info:
+  title: "Thermostat Telemetry Fleet"
+  owner: "IoT Analytics Team"
+
+schema:
+  type: object
+  properties:
+    device_id:
+      type: string
+    temp_c:
+      type: number
+      description: "Temperature in Celsius (-30 to 60)"
+      minimum: -30
+      maximum: 60
+    batt_lvl:
+      type: number
+      description: "Battery level percentage (0.0 to 1.0)"
+      minimum: 0.0
+      maximum: 1.0
+
+quality:
+  - name: rule_temp_range_check
+    type: validity
+    expression: "temp_c >= -30 AND temp_c <= 60"
+    threshold: "100%"
+    enforcement: hard
+
+  - name: rule_battery_range_check
+    type: validity
+    expression: "batt_lvl >= 0.0 AND batt_lvl <= 1.0"
+    threshold: "100%"
+    enforcement: hard

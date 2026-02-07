@@ -1,0 +1,99 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# DATA CONTRACT: CityMove Ride-Share Analytics
+# ═══════════════════════════════════════════════════════════════════════════
+# NEGOTIATION SUMMARY
+# ───────────────────
+# Producer: Data Engineering Team (de-platform@citymove.com)
+# Consumer: ML Pricing Team (ml-pricing@citymove.com)
+#
+# Agreed Terms:
+#   - Logical naming applied to decouple cryptic DB schema from ML models.
+#   - PII tagging enabled for passenger_id to comply with privacy policy.
+#   - Freshness SLA set to 30 mins to support hourly model retraining.
+#   - Hard circuit breaker: Negative fares or invalid ratings block the pipeline.
+# ═══════════════════════════════════════════════════════════════════════════
+
+dataContractSpecification: 0.9.3
+id: urn:datacontract:citymove:ride-share-log
+version: 1.0.0
+
+info:
+  title: "CityMove Ride-Share Data Contract"
+  description: |
+    Stable interface for ride logs. Acts as a circuit breaker between 
+    operational PostgreSQL and the Dynamic Pricing ML model.
+  owner: "Data Engineering Team"
+  contact:
+    name: "DE Platform Lead"
+    email: "de-platform@citymove.com"
+  classification: internal
+  tags: [ride-share, pricing, ml-input]
+
+schema:
+  type: object
+  properties:
+    ride_id:
+      type: string
+      description: "Unique identifier for the ride"
+      pii: false
+      # physical_mapping: r_id
+
+    pickup_timestamp:
+      type: string
+      format: date-time
+      description: "Pickup time in UTC"
+      pii: false
+      # physical_mapping: ts_start
+
+    passenger_id:
+      type: integer
+      description: "Unique Passenger ID"
+      pii: true # Flagged as PII per requirements
+      # physical_mapping: pax_id
+
+    driver_rating:
+      type: number
+      description: "Driver Rating (Scale: 1.0 to 5.0)"
+      minimum: 1.0
+      maximum: 5.0
+      pii: false
+      # physical_mapping: d_rating
+
+    fare_amount_usd:
+      type: number
+      description: "Total fare paid by passenger in USD"
+      minimum: 0.0
+      pii: false
+      # physical_mapping: fare_final
+
+    distance_meters:
+      type: integer
+      description: "Distance traveled in meters"
+      pii: false
+      # physical_mapping: dist_m
+
+  required: [ride_id, pickup_timestamp, passenger_id, driver_rating, fare_amount_usd, distance_meters]
+
+sla:
+  freshness:
+    threshold: "30 minutes"
+    description: "Maximum latency from ride completion to data availability"
+
+quality:
+  - name: rule_fare_non_negative
+    type: validity
+    expression: "fare_amount_usd >= 0"
+    threshold: "100%"
+    enforcement: hard
+
+  - name: rule_rating_valid_range
+    type: validity
+    expression: "driver_rating >= 1.0 AND driver_rating <= 5.0"
+    threshold: "100%"
+    enforcement: hard
+
+  - name: rule_distance_completeness
+    type: completeness
+    column: distance_meters
+    threshold: "100%"
+    enforcement: hard
