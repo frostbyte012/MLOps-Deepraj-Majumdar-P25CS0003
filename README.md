@@ -19,7 +19,7 @@ Each directory corresponds to a specific module or assignment, containing its ow
 | Directory | Module | Key Focus Areas | Status |
 | --- | --- | --- | --- |
 | **[Assignment 1](https://www.google.com/search?q=./Assignment%25201/)** | **DLOps Base** | ResNet Architectures, FLOPs analysis, Hardware Acceleration (CPU vs GPU). | ✅ Complete |
-| **Assignment 2** | *Upcoming* | Containerization (Docker), Model Versioning, and CI/CD pipelines. | ⏳ Pending |
+| **Assignment 2** | Data Systems | Data Contracts (YAML), ODCS Standards, Circuit Breakers. | ✅ Complete |
 | **Assignment 3** | *Upcoming* | Distributed Training, Hyperparameter Tuning (Ray Tune/Optuna). | ⏳ Pending |
 
 ---
