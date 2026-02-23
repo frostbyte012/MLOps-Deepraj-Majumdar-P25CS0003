@@ -1,0 +1,17 @@
+# ── Dockerfile.eval (Production Evaluation Image — slim) ─────────────────────
+FROM python:3.10-slim
+
+ARG HF_MODEL_ID="frostbyte012/distilbert-goodreads-genre"
+ENV HF_MODEL_ID=${HF_MODEL_ID}
+
+WORKDIR /app
+
+# Only install what eval actually needs — no TensorFlow, no extras
+COPY requirements.eval.txt .
+RUN pip install --no-cache-dir -r requirements.eval.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+COPY src/ ./src/
+RUN mkdir -p results
+
+CMD ["sh", "-c", "python src/eval.py --model_path $HF_MODEL_ID --from_hub --output results/hub_eval_results.json"]

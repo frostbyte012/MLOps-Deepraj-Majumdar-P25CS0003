@@ -1,0 +1,10 @@
+{
+  "eval_loss": 1.10979163646698,
+  "eval_accuracy": 0.63875,
+  "eval_f1_weighted": 0.6407149235407981,
+  "eval_runtime": 275.5094,
+  "eval_samples_per_second": 5.807,
+  "eval_steps_per_second": 0.363,
+  "classification_report": "                        precision    recall  f1-score   support\n\n              children       0.73      0.70      0.71       200\n        comics_graphic       0.83      0.74      0.79       200\n    fantasy_paranormal       0.46      0.52      0.48       200\n     history_biography       0.56      0.67      0.61       200\nmystery_thriller_crime       0.64      0.59      0.61       200\n                poetry       0.80      0.79      0.79       200\n               romance       0.66      0.66      0.66       200\n           young_adult       0.49      0.45      0.47       200\n\n              accuracy                           0.64      1600\n             macro avg       0.65      0.64      0.64      1600\n          weighted avg       0.65      0.64      0.64      1600\n",
+  "model_source": "frostbyte012/distilbert-goodreads-genre"
+}
