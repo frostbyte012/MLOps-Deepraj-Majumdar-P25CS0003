@@ -5,9 +5,9 @@
 # To re-run a specific step, delete its .done file from ./results/
 # ==============================================================================
 
-WANDB_KEY="6af40924706cd809ec6e12d7fbcbf9c61d7cd6d8"
-HF_TOKEN="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"
-HF_REPO="frostbyte012/vit-s-lora-cifar100"
+WANDB_KEY="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # <-- CHANGE THIS to your actual Weights & Biases API key
+HF_TOKEN="hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+HF_REPO="YourHFUsername/your-vit-lora-model"  # <-- CHANGE THIS to your actual HuggingFace repo name
 CPU_ONLY=true
 
 # ── Setup ─────────────────────────────────────────────────────────────────────
