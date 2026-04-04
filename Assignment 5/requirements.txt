@@ -1,0 +1,33 @@
+# ── Core Deep Learning ──────────────────────────────────────────────────────
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# ── HuggingFace / PEFT / ViT ────────────────────────────────────────────────
+transformers>=4.38.0,<4.52.0   # >=4.52 requires PyTorch>=2.4; our image has 2.1
+peft>=0.9.0,<0.15.0
+timm>=0.9.12
+datasets>=2.18.0
+huggingface_hub>=0.21.0
+
+# ── IBM Adversarial Robustness Toolbox ───────────────────────────────────────
+adversarial-robustness-toolbox>=1.17.0
+
+# ── Experiment Tracking ─────────────────────────────────────────────────────
+wandb>=0.16.0
+
+# ── Hyperparameter Optimization ─────────────────────────────────────────────
+optuna>=3.5.0
+
+# ── Data Science & Visualization ────────────────────────────────────────────
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+pandas>=2.0.0
+Pillow>=10.0.0
+
+# ── Utilities ───────────────────────────────────────────────────────────────
+tqdm>=4.66.0
+PyYAML>=6.0
