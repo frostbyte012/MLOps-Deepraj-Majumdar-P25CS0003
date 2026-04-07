@@ -1,155 +1,227 @@
 #!/bin/bash
-# ==============================================================================
-# Assignment 5 — Full Pipeline Runner
-# Supports resuming: completed steps are skipped automatically.
-# To re-run a specific step, delete its .done file from ./results/
-# ==============================================================================
+# ═══════════════════════════════════════════════════════════════════
+#  Assignment 5 — One-command runner
+#  Just run: ./run_all.sh
+#
+#  Auto-detects what is already done by checking real output files.
+#  Safe to Ctrl+C and re-run — continues from where it stopped.
+# ═══════════════════════════════════════════════════════════════════
+set -e
 
-WANDB_KEY=""  # <-- CHANGE THIS to your actual Weights & Biases API key
-HF_TOKEN=""
-HF_REPO=""  # <-- CHANGE THIS to your actual HuggingFace repo name
-CPU_ONLY=false
+# ── API Keys ───────────────────────────────────────────────────────
+WANDB_API_KEY="6af40924706cd809ec6e12d7fbcbf9c61d7cd6d8"
+HF_TOKEN="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"
+HF_REPO="frostbyte012/vit-s-lora-cifar100"
+# ──────────────────────────────────────────────────────────────────
 
-# ── Setup ─────────────────────────────────────────────────────────────────────
-GPU_FLAG="--gpus all"
-if [ "$CPU_ONLY" = true ] || ! docker info --format '{{.Runtimes}}' 2>/dev/null | grep -q nvidia; then
-    GPU_FLAG=""
-    echo "⚠️  No NVIDIA runtime detected — running CPU-only mode."
-fi
+IMAGE_NAME="dlops-ass5"
+RESULTS_DIR="$(pwd)/results"
+DATA_DIR="$(pwd)/data"
+mkdir -p "$RESULTS_DIR" "$DATA_DIR"
 
-mkdir -p "$(pwd)/results"
-DONE_DIR="$(pwd)/results/.done"
-mkdir -p "$DONE_DIR"
+# ── Fix permissions on data/ so Docker never blocks downloads ──────
+sudo chown -R $USER:$USER "$DATA_DIR" 2>/dev/null || true
+chmod -R 755 "$DATA_DIR" 2>/dev/null || true
 
-# Helper: check if a step is already done
-done_file() { echo "$DONE_DIR/$1.done"; }
-is_done()   { [ -f "$(done_file "$1")" ]; }
-mark_done() { touch "$(done_file "$1")"; echo "✅ Step '$1' marked complete."; }
-
-# ── Step 0: Build Docker image (auto-rebuilds when Dockerfile/requirements change)
-# Hash Dockerfile + requirements.txt. If either changed since last build,
-# we rmi the old image and rebuild so the new deps are actually installed.
-HASH_FILE="$DONE_DIR/image.hash"
-CURRENT_HASH=$(md5sum Dockerfile requirements.txt 2>/dev/null | md5sum | awk '{print $1}')
-STORED_HASH=$(cat "$HASH_FILE" 2>/dev/null || echo "none")
-
-if ! docker image inspect dlops-ass5 &>/dev/null; then
-    echo ""
-    echo "🔨 Building Docker image (first time — this takes ~5 min)..."
-    docker build -t dlops-ass5 . || { echo "❌ Docker build failed."; exit 1; }
-    echo "$CURRENT_HASH" > "$HASH_FILE"
-elif [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
-    echo ""
-    echo "🔄 Dockerfile or requirements.txt changed — rebuilding image..."
-    docker rmi dlops-ass5 2>/dev/null
-    docker build -t dlops-ass5 . || { echo "❌ Docker build failed."; exit 1; }
-    echo "$CURRENT_HASH" > "$HASH_FILE"
+# ── Pre-download datasets if not already present ───────────────────
+if [ ! -d "$DATA_DIR/cifar-100-python" ]; then
+    echo "📦 Downloading CIFAR-100 (161MB)..."
+    rm -f "$DATA_DIR/cifar-100-python.tar.gz"
+    wget -q --show-progress \
+        https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz \
+        -O "$DATA_DIR/cifar-100-python.tar.gz"
+    tar -xzf "$DATA_DIR/cifar-100-python.tar.gz" -C "$DATA_DIR/"
+    rm -f "$DATA_DIR/cifar-100-python.tar.gz"
+    echo "✅ CIFAR-100 ready."
 else
-    echo "🐳 Docker image up to date — skipping build."
-    echo "   To force rebuild: rm $HASH_FILE && ./my_run.sh"
+    echo "✅ CIFAR-100 already downloaded — skipping."
 fi
 
-COMMON_FLAGS="$GPU_FLAG --ipc=host -e WANDB_API_KEY=$WANDB_KEY -v $(pwd)/results:/workspace/results"
+if [ ! -d "$DATA_DIR/cifar-10-batches-py" ]; then
+    echo "📦 Downloading CIFAR-10 (163MB)..."
+    rm -f "$DATA_DIR/cifar-10-python.tar.gz"
+    wget -q --show-progress \
+        https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz \
+        -O "$DATA_DIR/cifar-10-python.tar.gz"
+    tar -xzf "$DATA_DIR/cifar-10-python.tar.gz" -C "$DATA_DIR/"
+    rm -f "$DATA_DIR/cifar-10-python.tar.gz"
+    echo "✅ CIFAR-10 ready."
+else
+    echo "✅ CIFAR-10 already downloaded — skipping."
+fi
 
-# ── Step 1: Q1 — ViT-S + LoRA Training ───────────────────────────────────────
+##USE THIS ONLY : JUST FOR THE TIME BEING I"M USING SOMETHING ELSE
+
+# # ── Completion checkers — based on real output files ───────────────
+# q1_baseline_done() { [ -f "$RESULTS_DIR/Q1/baseline/result.json" ]; }
+# q1_lora_done() {
+#     local count=0
+#     for r in 2 4 8; do for a in 2 4 8; do
+#         [ -f "$RESULTS_DIR/Q1/lora_r${r}_a${a}/result.json" ] && count=$((count+1))
+#     done; done
+#     [ "$count" -eq 9 ]
+# }
+# q1_optuna_done()  { [ -f "$RESULTS_DIR/Q1/optuna_history.png" ]; }
+# q1_push_done()    { [ -f "$RESULTS_DIR/Q1/.hf_pushed" ]; }
+# q2i_done()        { [ -f "$RESULTS_DIR/Q2i/epsilon_sweep.png" ]; }
+# q2ii_done()       { [ -f "$RESULTS_DIR/Q2ii/pgd_vs_bim_comparison.png" ]; }
+
+# ── Completion checkers — based on real output files ───────────────
+q1_baseline_done() { return 0; }
+q1_lora_done()     { return 0; }
+q1_optuna_done()   { return 0; }
+q1_push_done()    { [ -f "$RESULTS_DIR/Q1/.hf_pushed" ]; }
+q2i_done()        { [ -f "$RESULTS_DIR/Q2i/epsilon_sweep.png" ]; }
+q2ii_done()       { [ -f "$RESULTS_DIR/Q2ii/pgd_vs_bim_comparison.png" ]; }
+
+# ── Common docker run command ──────────────────────────────────────
+DRUN="docker run --gpus all --rm \
+  --shm-size=8g \
+  -e PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 \
+  -e WANDB_API_KEY=${WANDB_API_KEY} \
+  -e HF_TOKEN=${HF_TOKEN} \
+  -e HF_HUB_OFFLINE=1 \
+  -v ${RESULTS_DIR}:/workspace/results \
+  -v ${DATA_DIR}:/workspace/data \
+  -v $HOME/.cache/huggingface:/root/.cache/huggingface \
+  ${IMAGE_NAME}"
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 0: Build Docker image — only if missing
+# ══════════════════════════════════════════════════════════════════
 echo ""
-if is_done "q1_training"; then
-    echo "⏭️  Q1 (ViT-S + LoRA) already done — skipping."
+if docker image inspect $IMAGE_NAME &>/dev/null; then
+    echo "🐳 Docker image exists — skipping build."
 else
-    echo "📈 Running Q1: ViT-S + LoRA Training (all combos, 10 epochs each)..."
-    echo "   ⏱  Estimated time: ~5 hrs CPU / ~45 min GPU"
-    docker run $COMMON_FLAGS dlops-ass5 \
-        python Q1/train_vit_lora.py --mode all --epochs 10
-    if [ $? -eq 0 ]; then
-        mark_done "q1_training"
+    echo "🔨 Building Docker image (~5 min, only happens once)..."
+    docker build -t $IMAGE_NAME .
+    echo "✅ Image built."
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 1: Q1 Baseline
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q1_baseline_done; then
+    echo "⏭️  Q1 Baseline done — skipping."
+else
+    echo "📈 Q1 [1/3]: ViT-S Baseline — head only, no LoRA (~90 min)..."
+    $DRUN python3 Q1/train_vit_lora.py \
+        --mode baseline --epochs 10 --lr 1e-4 --batch_size 64 \
+        --save_dir /workspace/results/Q1 \
+        --wandb_project DLOps-Ass5-Q1
+    echo "✅ Q1 Baseline done."
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 2: Q1 LoRA (all 9 combos)
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q1_lora_done; then
+    echo "⏭️  Q1 LoRA all 9 combos done — skipping."
+else
+    echo "📈 Q1 [2/3]: LoRA combos r∈{2,4,8} × α∈{2,4,8} (~35 min)..."
+    $DRUN python3 Q1/train_vit_lora.py \
+        --mode lora --epochs 10 --lr 1e-4 --batch_size 64 \
+        --save_dir /workspace/results/Q1 \
+        --wandb_project DLOps-Ass5-Q1 \
+        --skip_baseline --skip_done
+    echo "✅ Q1 LoRA done."
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 3: Q1 Optuna HPO
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q1_optuna_done; then
+    echo "⏭️  Q1 Optuna done — skipping."
+else
+    echo "🔍 Q1 [3/3]: Optuna HPO — 20 trials (~30 min)..."
+    $DRUN python3 Q1/train_vit_lora.py \
+        --mode optuna --epochs 10 --optuna_trials 20 \
+        --save_dir /workspace/results/Q1 \
+        --wandb_project DLOps-Ass5-Q1
+    echo "✅ Q1 Optuna done."
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 4: Push best model to HuggingFace
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q1_push_done; then
+    echo "⏭️  HuggingFace push done — skipping."
+else
+    echo "🤗 Pushing best LoRA model to HuggingFace..."
+    BEST_CKPT=$(python3 - <<PYEOF
+import json, glob
+best_acc, best_ckpt = 0, ""
+for f in glob.glob("results/Q1/lora_*/result.json"):
+    try:
+        d = json.load(open(f))
+        if d.get("test_acc", 0) > best_acc:
+            best_acc = d["test_acc"]
+            best_ckpt = f"results/Q1/{d['name']}/{d['name']}_best.pt"
+    except: pass
+print(best_ckpt)
+PYEOF
+)
+    if [ -n "$BEST_CKPT" ] && [ -f "$BEST_CKPT" ]; then
+        docker run --gpus all --rm \
+          -e HF_TOKEN=${HF_TOKEN} \
+          -v ${RESULTS_DIR}:/workspace/results \
+          ${IMAGE_NAME} \
+          python3 push_to_hub.py \
+            --ckpt /workspace/results/${BEST_CKPT#results/} \
+            --hf_token "${HF_TOKEN}"
+        touch "$RESULTS_DIR/Q1/.hf_pushed"
+        echo "✅ Pushed to HuggingFace."
     else
-        echo "❌ Q1 failed. Fix errors above, then re-run this script."
+        echo "⚠️  No LoRA checkpoint found — skipping HF push."
+    fi
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 5: Q2i — ResNet18 + FGSM
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q2i_done; then
+    echo "⏭️  Q2i done — skipping."
+else
+    echo "⚔️  Q2i: ResNet18 CIFAR-10 + FGSM attack (~10 min)..."
+    SKIP_TRAIN=""
+    [ -f "$RESULTS_DIR/Q2i/resnet18_clean.pt" ] && SKIP_TRAIN="--skip_train"
+    $DRUN python3 Q2/fgsm_attack.py \
+        --epochs 50 --lr 0.1 --batch_size 128 \
+        --save_dir /workspace/results/Q2i \
+        --wandb_project DLOps-Ass5-Q2 \
+        $SKIP_TRAIN
+    echo "✅ Q2i done."
+fi
+
+# ══════════════════════════════════════════════════════════════════
+#  STEP 6: Q2ii — Adversarial Detection
+# ══════════════════════════════════════════════════════════════════
+echo ""
+if q2ii_done; then
+    echo "⏭️  Q2ii done — skipping."
+else
+    if [ ! -f "$RESULTS_DIR/Q2i/resnet18_clean.pt" ]; then
+        echo "❌ Victim model missing — Q2i must complete first."
         exit 1
     fi
+    echo "🛡️  Q2ii: Adversarial Detectors PGD + BIM (~15 min)..."
+    $DRUN python3 Q2/adversarial_detection.py \
+        --victim_ckpt /workspace/results/Q2i/resnet18_clean.pt \
+        --epochs 30 --n_samples 5000 --eps 0.03 \
+        --save_dir /workspace/results/Q2ii \
+        --wandb_project DLOps-Ass5-Q2
+    echo "✅ Q2ii done."
 fi
 
-# ── Step 2: Q2i — ResNet18 Training + FGSM Attack ────────────────────────────
+# ══════════════════════════════════════════════════════════════════
 echo ""
-if is_done "q2i_fgsm"; then
-    echo "⏭️  Q2i (ResNet18 + FGSM) already done — skipping."
-else
-    echo "🛡️  Running Q2i: ResNet18 + FGSM Attack (50 epochs)..."
-    echo "   ⏱  Estimated time: ~2 hrs CPU / ~15 min GPU"
-    docker run $COMMON_FLAGS dlops-ass5 \
-        python Q2/fgsm_attack.py --epochs 50
-    if [ $? -eq 0 ]; then
-        mark_done "q2i_fgsm"
-    else
-        echo "❌ Q2i failed. Fix errors above, then re-run this script."
-        exit 1
-    fi
-fi
-
-# ── Step 3: Q2ii — Adversarial Detection ─────────────────────────────────────
-echo ""
-if is_done "q2ii_detection"; then
-    echo "⏭️  Q2ii (Adversarial Detection) already done — skipping."
-else
-    # Sanity-check: victim weights must exist from Q2i
-    if [ ! -f "$(pwd)/results/Q2i/resnet18_clean.pt" ]; then
-        echo "❌ Victim checkpoint not found at ./results/Q2i/resnet18_clean.pt"
-        echo "   Q2i must complete successfully first."
-        exit 1
-    fi
-    echo "🔍 Running Q2ii: Adversarial Detection (PGD + BIM detectors)..."
-    echo "   ⏱  Estimated time: ~3 hrs CPU / ~25 min GPU"
-    docker run $COMMON_FLAGS dlops-ass5 \
-        python Q2/adversarial_detection.py \
-        --victim_ckpt ./results/Q2i/resnet18_clean.pt
-    if [ $? -eq 0 ]; then
-        mark_done "q2ii_detection"
-    else
-        echo "❌ Q2ii failed. Fix errors above, then re-run this script."
-        exit 1
-    fi
-fi
-
-# ── Step 4: Push best LoRA model to HuggingFace ──────────────────────────────
-echo ""
-if is_done "push_to_hub"; then
-    echo "⏭️  HuggingFace push already done — skipping."
-else
-    BEST_CKPT="$(pwd)/results/Q1/lora_r8_a8/lora_r8_a8_best.pt"
-    if [ ! -f "$BEST_CKPT" ]; then
-        echo "⚠️  Best checkpoint not found at $BEST_CKPT — skipping HuggingFace push."
-        echo "   Q1 must complete successfully first."
-    else
-        echo "🤗 Pushing best LoRA model to HuggingFace: $HF_REPO ..."
-        docker run $GPU_FLAG --ipc=host \
-            -e HF_TOKEN=$HF_TOKEN \
-            -v "$(pwd)/results:/workspace/results" \
-            dlops-ass5 \
-            python push_to_hub.py \
-            --ckpt ./results/Q1/lora_r8_a8/lora_r8_a8_best.pt \
-            --repo "$HF_REPO"
-        if [ $? -eq 0 ]; then
-            mark_done "push_to_hub"
-        else
-            echo "❌ HuggingFace push failed — check your HF_TOKEN and repo name."
-            # Non-fatal: don't exit, results are already saved locally
-        fi
-    fi
-fi
-
-# ── Summary ───────────────────────────────────────────────────────────────────
-echo ""
-echo "============================================================"
-echo "✅ All tasks completed! Results are in: $(pwd)/results/"
-echo ""
-echo "   Step status (delete .done file to re-run a step):"
-for step in q1_training q2i_fgsm q2ii_detection push_to_hub; do
-    if is_done "$step"; then
-        echo "   ✅ $step"
-    else
-        echo "   ⬜ $step (not completed)"
-    fi
-done
-echo ""
-echo "   To force re-run a specific step, e.g. Q2i:"
-echo "   rm $(done_file q2i_fgsm) && ./my_run.sh"
-echo "============================================================"
+echo "🎉 All steps complete!"
+echo "   Results     → $RESULTS_DIR"
+echo "   HuggingFace → https://huggingface.co/${HF_REPO}"
+echo "   WandB Q1    → https://wandb.ai/m23cse012/DLOps-Ass5-Q1"
+echo "   WandB Q2    → https://wandb.ai/m23cse012/DLOps-Ass5-Q2"

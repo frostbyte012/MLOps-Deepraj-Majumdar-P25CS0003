@@ -1,190 +1,123 @@
-# DLOps Assignment 5 — LoRA Fine-tuning & Adversarial Attacks
+# 🚀 DLOps Assignment 5 — LoRA Fine-tuning & Adversarial Attacks
 
-> **Branch:** `Assignment-5`  
-> **WandB Project:** [DLOps-Ass5](https://wandb.ai/<your-username>/DLOps-Ass5-Q1)  
-> **HuggingFace Model:** [<your-username>/vit-s-lora-cifar100](https://huggingface.co/<your-username>/vit-s-lora-cifar100)
+**Name:** Deepraj Majumdar  
+**Roll No:** P25CS0003  
+
+### 🔗 Quick Links
+> **GitHub Repository:** [Assignment Branch](https://github.com/frostbyte012/MLOps-Deepraj-Majumdar-P25CS0003/tree/Assignment_4)  
+> **WandB Q1 (ViT-S + LoRA):** [DLOps-Ass5-Q1](https://wandb.ai/tech-frostbyte-dev-012/DLOps-Ass5-Q1?nw=nwusertechfrostbytedev)  
+> **WandB Q2 (Adversarial):** [DLOps-Ass5-Q2](https://wandb.ai/tech-frostbyte-dev-012/DLOps-Ass5-Q2?nw=nwusertechfrostbytedev)  
+> **HuggingFace Model:** [frostbyte012/vit-s-lora-cifar100](https://huggingface.co/frostbyte012/vit-s-lora-cifar100)
 
 ---
 
 ## 📁 Repository Structure
-
-```
+```text
 Assignment-5/
 ├── Q1/
-│   └── train_vit_lora.py       # ViT-S + LoRA on CIFAR-100
+│   └── train_vit_lora.py       # ViT-S + LoRA on CIFAR-100 (Grid Search & Optuna)
 ├── Q2/
-│   ├── fgsm_attack.py          # FGSM from scratch vs IBM ART
-│   └── adversarial_detection.py# PGD/BIM adversarial detector
+│   ├── fgsm_attack.py          # FGSM from scratch vs IBM ART on ResNet18
+│   └── adversarial_detection.py# PGD/BIM adversarial detector (ResNet34)
 ├── results/                    # Auto-created: checkpoints, plots, JSONs
-├── Dockerfile
-├── requirements.txt
-└── README.md
-```
+├── Dockerfile                  # Containerized environment setup
+├── requirements.txt            # Python dependencies
+├── run_all.sh                  # Master execution script (Automates Q1 & Q2)
+└── README.md                   # You are here!
+````
 
----
+-----
 
-## 🐳 Docker Setup (Required)
+## ⚙️ How It Works & How to Run
 
-```bash
-# Build the container
-docker build -t dlops-ass5 .
+This project is completely automated and containerized using Docker. The easiest way to execute the entire pipeline (CIFAR downloading, ViT-S fine-tuning, LoRA grid search, Optuna sweeping, HF pushing, and Adversarial Attack/Detection) is to use the provided bash script.
 
-# Run with GPU
-docker run --gpus all -v $(pwd)/results:/workspace/results dlops-ass5 \
-    python Q1/train_vit_lora.py --mode all --epochs 10
+### 🐳 The 1-Click Docker Method (Recommended)
 
-# Or get an interactive shell
-docker run --gpus all -it -v $(pwd)/results:/workspace/results dlops-ass5 bash
-```
-
----
-
-## ⚙️ Local Installation
+Make sure Docker is installed and your NVIDIA runtime is configured.
 
 ```bash
-# Python 3.10+
+# Make the script executable
+chmod +x run_all.sh
+
+# Run the master pipeline
+./run_all.sh
+```
+
+### 🛠️ Manual / Local Execution
+
+If you prefer to run the files individually outside of the master script:
+
+```bash
+# 1. Setup Virtual Environment
 python -m venv venv && source venv/bin/activate
-
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# 2. Login to WandB and HuggingFace
+wandb login
+huggingface-cli login
+
+# 3. Run Q1 (ViT-S + LoRA Grid Search)
+python Q1/train_vit_lora.py --mode all --epochs 10 --lr 1e-4 --save_dir ./results/Q1
+
+# 4. Run Q2i (Victim ResNet18 + FGSM Attack)
+python Q2/fgsm_attack.py --epochs 50 --lr 0.1 --save_dir ./results/Q2i
+
+# 5. Run Q2ii (Adversarial Detector)
+python Q2/adversarial_detection.py --victim_ckpt ./results/Q2i/resnet18_clean.pt --epochs 15 --eps 0.03 --save_dir ./results/Q2ii
 ```
 
----
+-----
 
-## 🔑 WandB Login
+## 📊 Q1 Results: ViT-S Fine-tuning with LoRA
 
-```bash
-wandb login   # enter your API key
-```
+By injecting LoRA into the Attention layers (Q, K, V) of a pre-trained ViT-S model, we achieved a massive \~10% accuracy boost on CIFAR-100 while training a fraction of the parameters. Optuna confirmed **Rank 8 / Alpha 8** as the optimal configuration.
 
----
+| LORA layers (with/without) | Rank | Alpha | Dropout | Overall Test Accuracy | Trainable Params |
+|----------------------------|------|-------|---------|-----------------------|------------------|
+| without                    | —    | —     | —       | 77.8%                 | \~ 38,400         |
+| with                       | 2    | 2     | 0.1     | 87.4%                 | 93,796           |
+| with                       | 2    | 4     | 0.1     | 87.6%                 | 93,796           |
+| with                       | 2    | 8     | 0.1     | 87.2%                 | 93,796           |
+| with                       | 4    | 2     | 0.1     | 87.4%                 | 149,092          |
+| with                       | 4    | 4     | 0.1     | 87.5%                 | 149,092          |
+| with                       | 4    | 8     | 0.1     | 87.8%                 | 149,092          |
+| with                       | 8    | 2     | 0.1     | 87.3%                 | 259,684          |
+| with                       | 8    | 4     | 0.1     | 87.5%                 | 259,684          |
+| **with** | **8**| **8** | **0.1** | **87.9%** | **259,684** |
 
-## Q1 — ViT-S Fine-tuning with LoRA on CIFAR-100
+### Performance Comparison
 
-### Run All Experiments (Baseline + All LoRA Combinations)
+-----
 
-```bash
-python Q1/train_vit_lora.py \
-    --mode all \
-    --epochs 10 \
-    --lr 1e-4 \
-    --batch_size 128 \
-    --save_dir ./results/Q1 \
-    --wandb_project DLOps-Ass5-Q1
-```
+## 🛡️ Q2 Results: Adversarial Attacks & Detection
 
-### Run Only Baseline (No LoRA)
+### Q2(i) FGSM Attack: Scratch vs IBM ART
 
-```bash
-python Q1/train_vit_lora.py --mode baseline --epochs 10
-```
+A non-pretrained ResNet-18 was trained on CIFAR-10, achieving an **86.92%** clean accuracy. We then attacked it using FGSM. The custom Scratch implementation caused a steeper drop in accuracy at higher epsilon values compared to the ART estimator.
 
-### Run Single LoRA Experiment
+| ε (Epsilon) | Clean Acc | FGSM Scratch | FGSM ART | Drop (Scratch) | Drop (ART) |
+|-------------|-----------|--------------|----------|----------------|------------|
+| **0.000** | 86.92%    | 86.92%       | 86.92%   | 0.00%          | 0.00%      |
+| **0.010** | 86.92%    | 76.25%       | 81.78%   | 10.67%         | 5.14%      |
+| **0.030** | 86.92%    | 53.65%       | 61.35%   | 33.27%         | 25.57%     |
+| **0.050** | 86.92%    | 36.60%       | 44.57%   | 50.32%         | 42.35%     |
+| **0.100** | 86.92%    | 14.88%       | 22.79%   | 72.04%         | 64.13%     |
 
-```bash
-python Q1/train_vit_lora.py --mode lora --rank 4 --alpha 4 --dropout 0.1 --epochs 10
-```
+### Perturbation Strength Impact
 
-### Optuna Hyperparameter Search
+-----
 
-```bash
-python Q1/train_vit_lora.py \
-    --mode optuna \
-    --optuna_trials 20 \
-    --epochs 10 \
-    --save_dir ./results/Q1
-```
+### Q2(ii) Adversarial Detection (ResNet-34)
 
----
+A ResNet-34 binary classifier was trained to distinguish between clean images and adversarial examples generated via PGD and BIM. The detector successfully surpassed the 70% accuracy requirement.
 
-## Q2 — Adversarial Attacks (IBM ART)
+| Attack Type | Val Accuracy | Test Det. Accuracy | ROC AUC | PR AUC |
+|-------------|--------------|--------------------|---------|--------|
+| **PGD** | 70.25%       | 70.80%             | 0.798   | 0.792  |
+| **BIM** | 68.10%       | 70.15%             | 0.794   | 0.778  |
 
-### Step 1: Train victim ResNet18 + FGSM comparison
+### PGD vs BIM Detection Performance
 
-```bash
-python Q2/fgsm_attack.py \
-    --epochs 50 \
-    --lr 0.1 \
-    --batch_size 128 \
-    --save_dir ./results/Q2i \
-    --wandb_project DLOps-Ass5-Q2
-```
-
-### Step 2: Train Adversarial Detectors (PGD + BIM)
-
-```bash
-# Requires victim weights from Step 1
-python Q2/adversarial_detection.py \
-    --victim_ckpt ./results/Q2i/resnet18_clean.pt \
-    --epochs 30 \
-    --n_samples 5000 \
-    --eps 0.03 \
-    --save_dir ./results/Q2ii \
-    --wandb_project DLOps-Ass5-Q2
-```
-
----
-
-## 📊 Q1 Results
-
-### Test Accuracy & Trainable Parameters
-
-| Experiment         | LoRA | Rank | Alpha | Dropout | Test Acc | Trainable Params |
-|--------------------|------|------|-------|---------|----------|-----------------|
-| Baseline (head)    | ✗    | —    | —     | —       | ~70%     | ~77,000         |
-| LoRA r=2, α=2      | ✓    | 2    | 2     | 0.1     | ~79%     | ~350,000        |
-| LoRA r=2, α=4      | ✓    | 2    | 4     | 0.1     | ~80%     | ~350,000        |
-| LoRA r=2, α=8      | ✓    | 2    | 8     | 0.1     | ~81%     | ~350,000        |
-| LoRA r=4, α=2      | ✓    | 4    | 2     | 0.1     | ~80%     | ~625,000        |
-| LoRA r=4, α=4      | ✓    | 4    | 4     | 0.1     | ~82%     | ~625,000        |
-| LoRA r=4, α=8      | ✓    | 4    | 8     | 0.1     | ~83%     | ~625,000        |
-| LoRA r=8, α=2      | ✓    | 8    | 2     | 0.1     | ~81%     | ~1,200,000      |
-| LoRA r=8, α=4      | ✓    | 8    | 4     | 0.1     | ~83%     | ~1,200,000      |
-| LoRA r=8, α=8      | ✓    | 8    | 8     | 0.1     | ~84%     | ~1,200,000      |
-
-*(Actual values populated after running experiments)*
-
----
-
-## 📊 Q2 Results
-
-### FGSM Accuracy vs Perturbation Strength
-
-| ε     | Clean Acc | FGSM Scratch | FGSM ART | Drop (Scratch) | Drop (ART) |
-|-------|-----------|-------------|----------|----------------|------------|
-| 0.000 | ~72%      | ~72%        | ~72%     | 0%             | 0%         |
-| 0.010 | ~72%      | ~65%        | ~64%     | ~7%            | ~8%        |
-| 0.030 | ~72%      | ~48%        | ~47%     | ~24%           | ~25%       |
-| 0.050 | ~72%      | ~35%        | ~34%     | ~37%           | ~38%       |
-| 0.100 | ~72%      | ~20%        | ~19%     | ~52%           | ~53%       |
-
-### Adversarial Detection (ResNet34)
-
-| Attack | Val Acc | Test Det. Acc | ROC AUC | PR AUC |
-|--------|---------|--------------|---------|--------|
-| PGD    | ~93%    | ~92%         | ~97%    | ~96%   |
-| BIM    | ~91%    | ~90%         | ~96%    | ~95%   |
-
----
-
-## 📈 Generated Plots (auto-saved to `./results/`)
-
-- `Q1/*/curves.png` — Train/Val Loss & Accuracy per experiment
-- `Q1/*/classwise.png` — Per-class test accuracy histogram (100 classes)
-- `Q1/*/gradients.png` — LoRA gradient norms during training
-- `Q1/comparison_bar.png` — All experiments comparison chart
-- `Q1/optuna_history.png` / `optuna_importance.png` — Optuna results
-- `Q2i/fgsm_comparison_*.png` — Visual: Original vs Scratch vs ART
-- `Q2i/epsilon_sweep.png` — Accuracy vs ε for all attacks
-- `Q2ii/{PGD,BIM}_confusion.png` — Confusion matrices
-- `Q2ii/{PGD,BIM}_roc.png` / `_pr_curve.png` — ROC & PR curves
-- `Q2ii/{PGD,BIM}_score_dist.png` — Score distributions
-- `Q2ii/pgd_vs_bim_comparison.png` — PGD vs BIM final comparison
-- `Q2ii/sample_comparison.png` — Clean/PGD/BIM sample grid
-
----
-
-## 🔗 Links
-
-- **WandB:** https://wandb.ai/<your-username>/DLOps-Ass5-Q1
-- **HuggingFace:** https://huggingface.co/<your-username>/vit-s-lora-cifar100
+### Clean vs. Adversarial Visual Samples

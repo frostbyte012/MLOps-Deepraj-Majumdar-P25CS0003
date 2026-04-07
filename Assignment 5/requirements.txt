@@ -20,7 +20,7 @@ wandb>=0.16.0
 optuna>=3.5.0
 
 # ── Data Science & Visualization ────────────────────────────────────────────
-numpy>=1.24.0
+numpy<2
 scipy>=1.11.0
 scikit-learn>=1.3.0
 matplotlib>=3.7.0
