@@ -9,9 +9,9 @@
 set -e
 
 # ── API Keys ───────────────────────────────────────────────────────
-WANDB_API_KEY="6af40924706cd809ec6e12d7fbcbf9c61d7cd6d8"
-HF_TOKEN="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"
-HF_REPO="frostbyte012/vit-s-lora-cifar100"
+WANDB_API_KEY=""
+HF_TOKEN=""
+HF_REPO=""
 # ──────────────────────────────────────────────────────────────────
 
 IMAGE_NAME="dlops-ass5"
