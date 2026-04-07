@@ -13,17 +13,25 @@
 
 ## 📁 Repository Structure
 ```text
-Assignment-5/
-├── Q1/
-│   └── train_vit_lora.py       # ViT-S + LoRA on CIFAR-100 (Grid Search & Optuna)
-├── Q2/
-│   ├── fgsm_attack.py          # FGSM from scratch vs IBM ART on ResNet18
-│   └── adversarial_detection.py# PGD/BIM adversarial detector (ResNet34)
-├── results/                    # Auto-created: checkpoints, plots, JSONs
-├── Dockerfile                  # Containerized environment setup
-├── requirements.txt            # Python dependencies
-├── run_all.sh                  # Master execution script (Automates Q1 & Q2)
-└── README.md                   # You are here!
+📦 DLOps-Assignment-5
+ ┣ 📜 README.md                     <-- (Contains installation steps, tables, and WandB/HF links)
+ ┣ 📜 requirements.txt              <-- (List of pip packages)
+ ┣ 📜 run_all.sh                    <-- (Master execution script)
+ ┣ 📜 train_vit_lora.py             <-- (Q1 script)
+ ┣ 📜 fgsm_attack.py                <-- (Q2i script)
+ ┣ 📜 adversarial_detection.py      <-- (Q2ii script)
+ ┣ 📜 P25CS0003_Deepraj_Surname_Ass5.pdf  <-- (final report!)
+ ┣ 📂 weights/                      <-- (.pt files here)
+ ┃  ┣ 📜 vit_baseline.pt
+ ┃  ┣ 📜 lora_r8_a8_best.pt
+ ┃  ┣ 📜 resnet18_clean.pt
+ ┃  ┣ 📜 detector_pgd.pt
+ ┃  ┗ 📜 detector_bim.pt
+ ┗ 📂 results/                      <-- (Generated plots here)
+    ┣ 📜 comparison_bar.png
+    ┣ 📜 epsilon_sweep.png
+    ┣ 📜 pgd_vs_bim_comparison.png
+    ┗ 📜 ... (other plot images)
 ````
 
 -----
@@ -88,6 +96,10 @@ By injecting LoRA into the Attention layers (Q, K, V) of a pre-trained ViT-S mod
 | **with** | **8**| **8** | **0.1** | **87.9%** | **259,684** |
 
 ### Performance Comparison
+## Q1 Results: Test Accuracy & Trainable Parameters
+As shown in the graph below, Rank 8 / Alpha 8 achieved the highest accuracy.
+
+![Comparison Chart](results/comparison_bar.png)
 
 -----
 
@@ -119,5 +131,14 @@ A ResNet-34 binary classifier was trained to distinguish between clean images an
 | **BIM** | 68.10%       | 70.15%             | 0.794   | 0.778  |
 
 ### PGD vs BIM Detection Performance
+## Q2 Results: PGD vs BIM Detection Performanc
+As shown in the graph below we compare BIM vs PGD.
+
+![Comparison Chart 2](results/pgd_vs_bim_comparison.png)
 
 ### Clean vs. Adversarial Visual Samples
+fgsm_comparison_eps0.030.png
+## Q2 Results: PGD vs BIM Detection Performanc
+As shown in the graph below we compare BIM vs PGD.
+
+![Comparison Char 3](results/fgsm_comparison_eps0.030.png)
