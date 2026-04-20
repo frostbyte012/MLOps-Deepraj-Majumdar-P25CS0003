@@ -307,9 +307,6 @@ nexusvoice() {
 ## 👥 Authors
 
 **Deepraj Majumdar** · p25cs0003@iitj.ac.in  
-**Kushal Sharma** · m25cse0025@iitj.ac.in  
-**Mayank Vatsa** · mvatsa@iitj.ac.in  
-
 *Department of Computer Science and Engineering, IIT Jodhpur*
 
 ---
