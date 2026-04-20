@@ -1,0 +1,63 @@
+schema: '2.0'
+stages:
+  stage_01_prepare_data:
+    cmd: python pipeline/stage_01_prepare_data.py
+    deps:
+    - path: pipeline/stage_01_prepare_data.py
+      hash: md5
+      md5: e645cbcde97eec13bffa878b35d66c9d
+      size: 6765
+    params:
+      params.yaml:
+        dataset.duration_s: 5
+        dataset.sample_count: 50
+        dataset.sample_rate: 16000
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: b100a2f8eaa064dcc05c977736499251.dir
+      size: 7693241
+      nfiles: 49
+  stage_02_transcribe:
+    cmd: python pipeline/stage_02_transcribe.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: b100a2f8eaa064dcc05c977736499251.dir
+      size: 7693241
+      nfiles: 49
+    - path: pipeline/stage_02_transcribe.py
+      hash: md5
+      md5: 58bd56c6655531bc186380d592f09dca
+      size: 11209
+    params:
+      params.yaml:
+        whisper.model: tiny
+    outs:
+    - path: data/benchmarks/metrics.json
+      hash: md5
+      md5: ce1a0b8ff9bd5218c4b7e0d828faa8e3
+      size: 90
+    - path: data/processed/transcription_results.json
+      hash: md5
+      md5: b589c413cc25da3cbc2fc00d07b902e5
+      size: 17727
+  stage_03_drift_detection:
+    cmd: python pipeline/stage_03_drift_detection.py
+    deps:
+    - path: data/processed/transcription_results.json
+      hash: md5
+      md5: b589c413cc25da3cbc2fc00d07b902e5
+      size: 17727
+    - path: pipeline/stage_03_drift_detection.py
+      hash: md5
+      md5: f7cdf7704f5b19a996d9b27a58d17bc0
+      size: 8939
+    params:
+      params.yaml:
+        drift.threshold: 0.1
+    outs:
+    - path: data/benchmarks/drift_report.json
+      hash: md5
+      md5: 3d194c15b4f045c87daa6a80cd8f41ce
+      size: 1422

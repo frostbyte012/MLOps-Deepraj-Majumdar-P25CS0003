@@ -1,0 +1,25 @@
+# params.yaml
+# NexusVoice DVC Pipeline Parameters
+#
+# Change any value here and run `dvc repro` —
+# DVC will only re-run stages that depend on changed params.
+
+dataset:
+  sample_count: 50          # Number of audio samples to generate/use
+  sample_rate: 16000        # Hz — must match Whisper expectation
+  duration_s: 5             # Seconds per audio clip
+  source: "mozilla_common_voice_17_synthetic"
+
+whisper:
+  model: tiny               # tiny | base | small | medium | large
+  language: en
+  fp16: false               # Set true if CUDA available and you want speed
+
+drift:
+  threshold: 0.10           # 10% degradation in word_overlap triggers drift alert
+  metric: word_overlap      # Primary metric to watch for drift
+  baseline_version: "v1.0"
+
+mlflow:
+  experiment_name: nexusvoice
+  tracking_uri: "http://localhost:5001"

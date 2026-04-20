@@ -1,0 +1,53 @@
+# dvc.yaml
+# NexusVoice DVC Pipeline
+#
+# Run full pipeline:  dvc repro
+# Run one stage:      dvc repro stage_01_prepare_data
+# Show DAG:           dvc dag
+# Check status:       dvc status
+
+stages:
+
+  # ── Stage 1: Prepare dataset ──────────────────────────────
+  stage_01_prepare_data:
+    cmd: python pipeline/stage_01_prepare_data.py
+    deps:
+      - pipeline/stage_01_prepare_data.py
+    params:
+      - params.yaml:
+          - dataset.sample_count
+          - dataset.sample_rate
+          - dataset.duration_s
+    outs:
+      - data/raw:
+          cache: true       # DVC caches this — git only stores the hash
+          persist: true
+
+  # ── Stage 2: Transcribe + benchmark ───────────────────────
+  stage_02_transcribe:
+    cmd: python pipeline/stage_02_transcribe.py
+    deps:
+      - pipeline/stage_02_transcribe.py
+      - data/raw                          # Re-runs if raw data changes
+    params:
+      - params.yaml:
+          - whisper.model
+    outs:
+      - data/processed/transcription_results.json:
+          cache: true
+    metrics:
+      - data/benchmarks/metrics.json:
+          cache: false                    # Metrics tracked by git, not DVC cache
+
+  # ── Stage 3: Drift detection ───────────────────────────────
+  stage_03_drift_detection:
+    cmd: python pipeline/stage_03_drift_detection.py
+    deps:
+      - pipeline/stage_03_drift_detection.py
+      - data/processed/transcription_results.json
+    params:
+      - params.yaml:
+          - drift.threshold
+    outs:
+      - data/benchmarks/drift_report.json:
+          cache: false

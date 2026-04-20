@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexusVoice — Voice to Code</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    color: #58a6ff;
+    letter-spacing: 0.05em;
+  }
+
+  header p {
+    color: #8b949e;
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 0.2rem 0.8rem;
+    font-size: 0.75rem;
+    color: #8b949e;
+    margin: 0.2rem;
+  }
+
+  .badge.green { border-color: #238636; color: #3fb950; }
+  .badge.yellow { border-color: #9e6a03; color: #d29922; }
+  .badge.red { border-color: #da3633; color: #f85149; }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 780px;
+    margin-bottom: 1.2rem;
+  }
+
+  .card h2 {
+    font-size: 0.85rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Mic button ── */
+  .mic-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  #mic-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #30363d;
+    background: #21262d;
+    cursor: pointer;
+    font-size: 2rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #mic-btn:hover { border-color: #58a6ff; }
+  #mic-btn.recording {
+    border-color: #f85149;
+    background: #3d1f1f;
+    animation: pulse 1s infinite;
+  }
+  #mic-btn.processing {
+    border-color: #d29922;
+    background: #2d2000;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(248,81,73,0.4); }
+    50%       { box-shadow: 0 0 0 12px rgba(248,81,73,0); }
+  }
+
+  #mic-status {
+    font-size: 0.85rem;
+    color: #8b949e;
+    min-height: 1.2em;
+    text-align: center;
+  }
+
+  /* Waveform canvas */
+  #waveform {
+    width: 100%;
+    height: 60px;
+    border-radius: 6px;
+    background: #0d1117;
+  }
+
+  /* ── Text input ── */
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  #text-input {
+    flex: 1;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: #c9d1d9;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #text-input:focus { border-color: #58a6ff; }
+
+  button.btn {
+    background: #238636;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button.btn:hover { background: #2ea043; }
+  button.btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+  button.btn.secondary { background: #21262d; border: 1px solid #30363d; }
+  button.btn.secondary:hover { background: #30363d; }
+
+  /* ── Transcript ── */
+  #transcript-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    min-height: 2.5rem;
+    font-size: 0.9rem;
+    color: #e6edf3;
+    font-style: italic;
+  }
+
+  /* ── Code output ── */
+  #code-output {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 120px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: #e6edf3;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.8rem;
+  }
+
+  /* ── Stats ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+  }
+
+  .stat-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+  }
+
+  .stat-box .val {
+    font-size: 1.4rem;
+    color: #58a6ff;
+    font-weight: bold;
+  }
+
+  .stat-box .lbl {
+    font-size: 0.7rem;
+    color: #8b949e;
+    margin-top: 0.2rem;
+  }
+
+  /* ── History ── */
+  #history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .history-item:hover { border-color: #58a6ff; }
+  .history-item .cmd { color: #e6edf3; }
+  .history-item .meta { color: #8b949e; margin-top: 0.2rem; }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid #30363d;
+    border-top-color: #58a6ff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  footer {
+    margin-top: 2rem;
+    color: #484f58;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ NexusVoice</h1>
+  <p>Hybrid Voice-to-Code Synthesizer — Stage 5</p>
+  <div style="margin-top:0.8rem">
+    <span class="badge green" id="badge-whisper">Whisper tiny</span>
+    <span class="badge green" id="badge-gemini">Gemini 2.5 Flash</span>
+    <span class="badge yellow" id="badge-fallback">CodeT5 fallback ready</span>
+    <span class="badge" id="badge-env">dev</span>
+  </div>
+</header>
+
+<!-- ── Voice Input ── -->
+<div class="card">
+  <h2>🎙 Voice Input</h2>
+  <div class="mic-area">
+    <canvas id="waveform"></canvas>
+    <button id="mic-btn" title="Click to record">🎤</button>
+    <div id="mic-status">Click to record a coding command (5s)</div>
+  </div>
+</div>
+
+<!-- ── Text Input ── -->
+<div class="card">
+  <h2>⌨️ Text Command</h2>
+  <div class="input-row">
+    <input id="text-input" type="text"
+           placeholder="e.g. write a binary search function..."
+           onkeydown="if(event.key==='Enter') submitText()">
+    <button class="btn" onclick="submitText()" id="submit-btn">Generate</button>
+    <button class="btn secondary" onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<!-- ── Transcript ── -->
+<div class="card">
+  <h2>📝 Transcription</h2>
+  <div id="transcript-box">Transcription will appear here after recording...</div>
+</div>
+
+<!-- ── Output ── -->
+<div class="card">
+  <h2>💻 Generated Code</h2>
+  <div id="code-output">Code will appear here after submitting a command...</div>
+  <div class="meta-row" id="meta-row"></div>
+</div>
+
+<!-- ── Stats ── -->
+<div class="card">
+  <h2>📊 Session Stats</h2>
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="val" id="stat-runs">0</div>
+      <div class="lbl">Total Runs</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-fallback">0</div>
+      <div class="lbl">Fallbacks</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-latency">—</div>
+      <div class="lbl">Last Latency</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── History ── -->
+<div class="card">
+  <h2>🕓 Command History</h2>
+  <div id="history-list"><div style="color:#484f58;font-size:0.8rem">No commands yet</div></div>
+</div>
+
+<footer>
+  NexusVoice · Stage 5 · GCP Cloud Run ·
+  <a href="/docs" style="color:#58a6ff">API Docs</a> ·
+  <a href="http://localhost:5001" style="color:#58a6ff" target="_blank">MLflow</a>
+</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+let mediaRecorder = null;
+let audioChunks   = [];
+let isRecording   = false;
+let sessionStats  = { runs: 0, fallbacks: 0, lastLatency: null };
+let history       = [];
+
+const RECORD_MS = 5000;
+
+// ── DOM refs ───────────────────────────────────────────────
+const micBtn      = document.getElementById('mic-btn');
+const micStatus   = document.getElementById('mic-status');
+const textInput   = document.getElementById('text-input');
+const submitBtn   = document.getElementById('submit-btn');
+const transcript  = document.getElementById('transcript-box');
+const codeOutput  = document.getElementById('code-output');
+const metaRow     = document.getElementById('meta-row');
+const waveCanvas  = document.getElementById('waveform');
+const waveCtx     = waveCanvas.getContext('2d');
+
+// ── Load status on startup ─────────────────────────────────
+async function loadStatus() {
+  try {
+    const r = await fetch('/status');
+    const d = await r.json();
+    document.getElementById('badge-whisper').textContent  = `Whisper ${d.whisper_model}`;
+    document.getElementById('badge-gemini').textContent   = d.gemini_model;
+    document.getElementById('badge-env').textContent      = d.environment;
+  } catch(e) {}
+}
+loadStatus();
+
+// ── Waveform visualizer ────────────────────────────────────
+function drawWaveform(analyser) {
+  if (!analyser) return;
+  const bufLen = analyser.frequencyBinCount;
+  const data   = new Uint8Array(bufLen);
+  const W      = waveCanvas.width  = waveCanvas.offsetWidth;
+  const H      = waveCanvas.height = 60;
+
+  function draw() {
+    if (!isRecording) {
+      waveCtx.clearRect(0, 0, W, H);
+      return;
+    }
+    requestAnimationFrame(draw);
+    analyser.getByteTimeDomainData(data);
+    waveCtx.fillStyle = '#0d1117';
+    waveCtx.fillRect(0, 0, W, H);
+    waveCtx.lineWidth   = 1.5;
+    waveCtx.strokeStyle = '#f85149';
+    waveCtx.beginPath();
+    const slice = W / bufLen;
+    let x = 0;
+    for (let i = 0; i < bufLen; i++) {
+      const v = data[i] / 128.0;
+      const y = v * H / 2;
+      i === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+      x += slice;
+    }
+    waveCtx.lineTo(W, H / 2);
+    waveCtx.stroke();
+  }
+  draw();
+}
+
+// ── Recording ─────────────────────────────────────────────
+micBtn.addEventListener('click', async () => {
+  if (isRecording) return;
+
+  try {
+    const stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const audioCtx = new AudioContext();
+    const source   = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks   = [];
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      audioCtx.close();
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      micBtn.classList.add('processing');
+      micBtn.textContent = '⏳';
+      micStatus.innerHTML = '<span class="spinner"></span>Transcribing...';
+
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      await transcribeAudio(blob);
+
+      micBtn.classList.remove('processing');
+      micBtn.textContent = '🎤';
+      micStatus.textContent = 'Click to record again';
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.textContent = '⏹';
+    drawWaveform(analyser);
+
+    // Countdown
+    let remaining = RECORD_MS / 1000;
+    micStatus.textContent = `Recording... ${remaining}s`;
+    const timer = setInterval(() => {
+      remaining--;
+      micStatus.textContent = remaining > 0
+        ? `Recording... ${remaining}s`
+        : 'Processing...';
+      if (remaining <= 0) clearInterval(timer);
+    }, 1000);
+
+    setTimeout(() => {
+      if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+    }, RECORD_MS);
+
+  } catch(e) {
+    micStatus.textContent = `Mic error: ${e.message}`;
+    console.error(e);
+  }
+});
+
+// ── Transcribe audio blob ──────────────────────────────────
+async function transcribeAudio(blob) {
+  try {
+    const form = new FormData();
+    form.append('audio', blob, 'recording.webm');
+
+    const r = await fetch('/transcribe', { method: 'POST', body: form });
+    const d = await r.json();
+
+    if (d.text) {
+      transcript.textContent = d.text;
+      transcript.style.fontStyle = 'normal';
+      textInput.value = d.text;
+      // Auto-generate after transcription
+      await runGenerate(d.text);
+    } else {
+      transcript.textContent = d.error || 'No speech detected';
+      transcript.style.color = '#f85149';
+    }
+  } catch(e) {
+    transcript.textContent = `Transcription failed: ${e.message}`;
+  }
+}
+
+// ── Generate code ──────────────────────────────────────────
+async function submitText() {
+  const cmd = textInput.value.trim();
+  if (!cmd) return;
+  await runGenerate(cmd);
+}
+
+async function runGenerate(command) {
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner"></span>Generating...';
+  codeOutput.textContent = '⏳ Running pipeline...';
+  metaRow.innerHTML = '';
+
+  try {
+    const r = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command }),
+    });
+    const d = await r.json();
+
+    if (d.success && d.code) {
+      codeOutput.textContent = d.code;
+
+      // Meta badges
+      const fallbackColor = d.fallback_triggered ? '#f85149' : '#3fb950';
+      metaRow.innerHTML = `
+        <span class="badge green">✓ ${d.model_used}</span>
+        <span class="badge" style="border-color:${fallbackColor};color:${fallbackColor}">
+          ${d.fallback_triggered ? '⚡ Fallback: ' + d.fallback_reason : '✓ No fallback'}
+        </span>
+        <span class="badge">⏱ Gemini: ${d.gemini_latency}s</span>
+        <span class="badge">⏱ Total: ${d.total_latency}s</span>
+      `;
+    } else {
+      codeOutput.textContent = '✗ Pipeline failed — check server logs';
+    }
+
+    // Update session stats
+    sessionStats.runs++;
+    if (d.fallback_triggered) sessionStats.fallbacks++;
+    sessionStats.lastLatency = d.total_latency;
+    updateStats();
+
+    // Add to history
+    addHistory(command, d);
+
+  } catch(e) {
+    codeOutput.textContent = `Error: ${e.message}`;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Generate';
+  }
+}
+
+// ── Stats ──────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-runs').textContent     = sessionStats.runs;
+  document.getElementById('stat-fallback').textContent = sessionStats.fallbacks;
+  document.getElementById('stat-latency').textContent  =
+    sessionStats.lastLatency ? `${sessionStats.lastLatency}s` : '—';
+}
+
+// ── History ───────────────────────────────────────────────
+function addHistory(command, result) {
+  history.unshift({ command, result, time: new Date().toLocaleTimeString() });
+  const list = document.getElementById('history-list');
+  list.innerHTML = history.slice(0, 10).map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <div class="cmd">${h.command}</div>
+      <div class="meta">${h.time} · ${h.result.model_used} · ${h.result.total_latency}s</div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(i) {
+  const h = history[i];
+  textInput.value = h.command;
+  codeOutput.textContent = h.result.code || 'No code';
+  transcript.textContent = h.command;
+}
+
+// ── Clear ──────────────────────────────────────────────────
+function clearAll() {
+  textInput.value        = '';
+  codeOutput.textContent = 'Code will appear here after submitting a command...';
+  transcript.textContent = 'Transcription will appear here after recording...';
+  transcript.style.color = '';
+  metaRow.innerHTML      = '';
+}
+</script>
+</body>
+</html>

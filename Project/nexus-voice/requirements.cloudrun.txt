@@ -1,0 +1,34 @@
+# requirements.cloudrun.txt
+# Cloud Run — no audio hardware deps needed (browser handles mic)
+
+# Web server
+fastapi==0.111.0
+uvicorn==0.29.0
+python-multipart==0.0.9
+pydantic==2.7.1
+
+# Audio processing (server-side conversion only)
+soundfile
+numpy
+librosa
+
+# STT
+openai-whisper
+torch
+torchaudio
+
+# Local code generation
+transformers==4.40.2
+accelerate==0.29.3
+sentencepiece==0.2.0
+
+# Gemini
+google-generativeai==0.7.2
+
+# MLflow
+mlflow==2.12.2
+
+# Utils
+python-dotenv==1.0.1
+httpx==0.27.0
+rich==13.7.1

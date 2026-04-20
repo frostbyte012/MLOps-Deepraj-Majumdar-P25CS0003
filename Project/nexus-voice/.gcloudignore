@@ -1,0 +1,26 @@
+# Ignore large local directories
+venv/
+models/
+mlruns/
+mlartifacts/
+data/
+logs/
+.git/
+__pycache__/
+*.pyc
+.dvc/cache
+*.wav
+*.mp3
+
+# Keep source code only
+!src/
+!webapp/
+!pipeline/
+!scripts/
+!main.py
+!requirements*.txt
+!Dockerfile*
+!cloudbuild.yaml
+!params.yaml
+!dvc.yaml
+!.env

@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────────
+# NexusVoice — Cloud Run Dockerfile
+# Optimized for GCP Cloud Run (no audio hardware needed)
+# Audio comes from browser mic via WebRTC → uploaded to /transcribe
+# ─────────────────────────────────────────────────────────────
+
+# ── Stage A: Builder ──────────────────────────────────────────
+FROM python:3.10-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ git ffmpeg libsndfile1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY requirements.cloudrun.txt .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --prefix=/install -r requirements.cloudrun.txt
+
+
+# ── Stage B: Runtime ──────────────────────────────────────────
+FROM python:3.10-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+
+WORKDIR /app
+
+# Copy source
+COPY src/        ./src/
+COPY webapp/     ./webapp/
+COPY main.py     .
+COPY params.yaml .
+
+# Copy .env if exists (overridden by Cloud Run env vars in production)
+COPY .env* ./
+
+# Pre-download models at build time → fast cold starts on Cloud Run
+ENV HF_CACHE_DIR=/app/models
+ENV WHISPER_CACHE=/app/models/whisper
+ENV TRANSFORMERS_CACHE=/app/models/transformers
+ENV ENVIRONMENT=production
+
+RUN python3 -c "\
+import whisper; \
+whisper.load_model('tiny', download_root='/app/models/whisper'); \
+print('✓ Whisper downloaded')"
+
+RUN python3 -c "\
+from transformers import AutoTokenizer, T5ForConditionalGeneration; \
+AutoTokenizer.from_pretrained('Salesforce/codet5-small', cache_dir='/app/models/transformers', token=False); \
+T5ForConditionalGeneration.from_pretrained('Salesforce/codet5-small', cache_dir='/app/models/transformers', token=False); \
+print('✓ CodeT5 downloaded')"
+
+# Cloud Run requires PORT env var — default 8080
+ENV PORT=8080
+EXPOSE 8080
+
+# Start FastAPI server
+CMD exec uvicorn webapp.server:app \
+    --host 0.0.0.0 \
+    --port ${PORT} \
+    --workers 1 \
+    --timeout-keep-alive 30

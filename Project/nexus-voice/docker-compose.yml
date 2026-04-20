@@ -1,0 +1,70 @@
+# docker-compose.yml
+# NexusVoice — App container + MLflow sidecar
+#
+# Usage:
+#   docker compose up -d mlflow        # Start MLflow UI only
+#   docker compose run app --check     # Verify app container
+#   docker compose run app --text "write a bubble sort"
+#   docker compose run app --file /audio/command.wav
+
+services:
+
+  # ── Main NexusVoice app ──────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: nexusvoice:latest
+    container_name: nexusvoice_app
+    env_file: .env
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - HF_CACHE_DIR=/app/models
+    volumes:
+      # Persist downloaded models across rebuilds
+      - model_cache:/app/models
+      # Mount audio files from host for --file mode
+      - ./logs:/audio
+      # Persist logs
+      - ./logs:/app/logs
+    depends_on:
+      - mlflow
+    # Audio device passthrough (Linux host only)
+    devices:
+      - /dev/snd:/dev/snd
+    group_add:
+      - audio
+    networks:
+      - nexusnet
+
+  # ── MLflow tracking sidecar ──────────────────────────────
+  mlflow:
+    image: python:3.10-slim
+    container_name: nexusvoice_mlflow
+    command: >
+      bash -c "pip install mlflow --quiet &&
+               mlflow server
+               --host 0.0.0.0
+               --port 5000
+               --backend-store-uri sqlite:///mlflow/mlflow.db
+               --default-artifact-root /mlflow/artifacts"
+    ports:
+      - "5001:5000"       # Access MLflow UI at http://localhost:5001
+    volumes:
+      - mlflow_data:/mlflow
+    networks:
+      - nexusnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  model_cache:    # HF model weights — persisted across rebuilds
+  mlflow_data:    # MLflow experiment DB + artifacts
+
+networks:
+  nexusnet:
+    driver: bridge

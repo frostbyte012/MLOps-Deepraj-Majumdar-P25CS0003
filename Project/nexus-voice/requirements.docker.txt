@@ -1,0 +1,32 @@
+# requirements.docker.txt
+# Used inside Dockerfile — unpinned versions for build compatibility
+
+sounddevice
+soundfile
+numpy
+
+# STT
+openai-whisper
+torch
+torchaudio
+
+# Local code generation fallback
+transformers
+accelerate
+sentencepiece
+
+# Gemini
+google-generativeai
+
+# Orchestration
+langgraph
+
+# MLflow tracking (Stage 4)
+mlflow
+
+# Terminal UI
+rich
+
+# Utils
+python-dotenv
+httpx
