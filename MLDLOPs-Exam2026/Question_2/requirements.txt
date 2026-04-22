@@ -1,0 +1,7 @@
+torch
+torchvision
+Pillow
+scikit-learn
+matplotlib
+streamlit==1.10.0
+gdown
