@@ -1,0 +1,19 @@
+{
+  "baseline_accuracy": 62.428796509513994,
+  "baseline_gflops": 11.318884352,
+  "ptq_gflops": 2.829721088,
+  "ptq_gflops_impact": 8.489163264,
+  "ptq_accuracy": 62.428796509513994,
+  "ptq_acc_change": 0.0,
+  "best_hyperparams": {
+    "lr": 0.00314288089084011,
+    "weight_decay": 4.335281794951567e-06,
+    "batch_size": 64,
+    "epochs": 4
+  },
+  "best_val_acc": 99.7682511806488,
+  "qat_eval_accuracy": 92.14640855789185,
+  "qat_gflops": 2.829721088,
+  "final_acc_diff": 29.717612048377852,
+  "final_gflops_saved": 8.489163264
+}
