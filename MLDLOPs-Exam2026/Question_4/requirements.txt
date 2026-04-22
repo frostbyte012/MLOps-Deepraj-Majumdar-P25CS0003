@@ -1,0 +1,8 @@
+torch>=2.1.0
+torchaudio>=2.1.0
+speechbrain>=1.0.0
+optuna>=3.0.0
+datasets>=2.14.0
+huggingface_hub>=0.20.0
+thop>=0.1.1
+numpy>=1.24.0
